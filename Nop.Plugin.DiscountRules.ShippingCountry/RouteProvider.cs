@@ -6,6 +6,8 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
 {
     public partial class RouteProvider : IRouteProvider
     {
+        #region Methods
+
         public void RegisterRoutes(RouteCollection routes)
         {
             routes.MapRoute("Plugin.DiscountRules.ShippingCountry.Configure",
@@ -14,6 +16,11 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
                  new[] { "Nop.Plugin.DiscountRules.ShippingCountry.Controllers" }
             );
         }
+
+        #endregion
+
+        #region Properties
+
         public int Priority
         {
             get
@@ -21,5 +28,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
                 return 0;
             }
         }
+
+        #endregion
     }
 }

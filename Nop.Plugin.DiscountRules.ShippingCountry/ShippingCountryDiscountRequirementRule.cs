@@ -1,5 +1,4 @@
 using System;
-using Nop.Core;
 using Nop.Core.Plugins;
 using Nop.Services.Configuration;
 using Nop.Services.Discounts;
@@ -9,12 +8,22 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
 {
     public partial class ShippingCountryDiscountRequirementRule : BasePlugin, IDiscountRequirementRule
     {
+        #region Fields
+
         private readonly ISettingService _settingService;
+
+        #endregion
+
+        #region Ctor
 
         public ShippingCountryDiscountRequirementRule(ISettingService settingService)
         {
             this._settingService = settingService;
         }
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Check discount requirement
@@ -41,6 +50,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
                 return result;
 
             result.IsValid = request.Customer.ShippingAddress.CountryId == shippingCountryId;
+
             return result;
         }
 
@@ -54,8 +64,10 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         {
             //configured in RouteProvider.cs
             string result = "Plugins/DiscountRulesShippingCountry/Configure/?discountId=" + discountId;
+
             if (discountRequirementId.HasValue)
                 result += string.Format("&discountRequirementId={0}", discountRequirementId.Value);
+
             return result;
         }
 
@@ -76,5 +88,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
             this.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint");
             base.Uninstall();
         }
+
+        #endregion
     }
 }
