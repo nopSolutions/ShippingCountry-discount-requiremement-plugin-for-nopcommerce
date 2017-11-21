@@ -1,8 +1,11 @@
 using System;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Core.Plugins;
 using Nop.Services.Configuration;
 using Nop.Services.Discounts;
 using Nop.Services.Localization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Nop.Plugin.DiscountRules.ShippingCountry
 {
@@ -11,14 +14,20 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         #region Fields
 
         private readonly ISettingService _settingService;
+        private readonly IActionContextAccessor _actionContextAccessor;
+        private readonly IUrlHelperFactory _urlHelperFactory;
 
         #endregion
 
         #region Ctor
 
-        public ShippingCountryDiscountRequirementRule(ISettingService settingService)
+        public ShippingCountryDiscountRequirementRule(ISettingService settingService,
+            IActionContextAccessor actionContextAccessor,
+            IUrlHelperFactory urlHelperFactory)
         {
             this._settingService = settingService;
+            this._actionContextAccessor = actionContextAccessor;
+            this._urlHelperFactory = urlHelperFactory;
         }
 
         #endregion
@@ -33,7 +42,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         public DiscountRequirementValidationResult CheckRequirement(DiscountRequirementValidationRequest request)
         {
             if (request == null)
-                throw new ArgumentNullException("request");
+                throw new ArgumentNullException(nameof(request));
 
             //invalid by default
             var result = new DiscountRequirementValidationResult();
@@ -44,7 +53,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
             if (request.Customer.ShippingAddress == null)
                 return result;
 
-            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format("DiscountRequirement.ShippingCountry-{0}", request.DiscountRequirementId));
+            var shippingCountryId = _settingService.GetSettingByKey<int>($"DiscountRequirement.ShippingCountry-{request.DiscountRequirementId}");
 
             if (shippingCountryId == 0)
                 return result;
@@ -62,13 +71,9 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         /// <returns>URL</returns>
         public string GetConfigurationUrl(int discountId, int? discountRequirementId)
         {
-            //configured in RouteProvider.cs
-            string result = "Plugins/DiscountRulesShippingCountry/Configure/?discountId=" + discountId;
-
-            if (discountRequirementId.HasValue)
-                result += string.Format("&discountRequirementId={0}", discountRequirementId.Value);
-
-            return result;
+            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
+            return urlHelper.Action("Configure", "DiscountRulesShippingCountry",
+                new { discountId = discountId, discountRequirementId = discountRequirementId }).TrimStart('/');
         }
 
         public override void Install()

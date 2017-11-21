@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Discounts;
 using Nop.Plugin.DiscountRules.ShippingCountry.Models;
 using Nop.Services.Configuration;
@@ -8,12 +9,14 @@ using Nop.Services.Directory;
 using Nop.Services.Discounts;
 using Nop.Services.Localization;
 using Nop.Services.Security;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
-using Nop.Web.Framework.Security;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
 {
-    [AdminAuthorize]
+    [AuthorizeAdmin]
+    [Area(AreaNames.Admin)]
     public class DiscountRulesShippingCountryController : BasePluginController
     {
         #region Fields
@@ -45,7 +48,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
 
         #region Methods
 
-        public ActionResult Configure(int discountId, int? discountRequirementId)
+        public IActionResult Configure(int discountId, int? discountRequirementId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return Content("Access denied");
@@ -64,30 +67,30 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
                     return Content("Failed to load requirement.");
             }
 
-            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format("DiscountRequirement.ShippingCountry-{0}", discountRequirementId.HasValue ? discountRequirementId.Value : 0));
+            var shippingCountryId = _settingService.GetSettingByKey<int>($"DiscountRequirement.ShippingCountry-{discountRequirementId ?? 0}");
 
             var model = new RequirementModel
             {
-                RequirementId = discountRequirementId.HasValue ? discountRequirementId.Value : 0,
+                RequirementId = discountRequirementId ?? 0,
                 DiscountId = discountId,
                 CountryId = shippingCountryId
             };
 
             //countries
-            model.AvailableCountries.Add(new SelectListItem() { Text = _localizationService.GetResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry"), Value = "0" });
+            model.AvailableCountries.Add(new SelectListItem { Text = _localizationService.GetResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry"), Value = "0" });
 
             foreach (var c in _countryService.GetAllCountries(showHidden: true))
-                model.AvailableCountries.Add(new SelectListItem() { Text = c.Name, Value = c.Id.ToString(), Selected = discountRequirement != null && c.Id == shippingCountryId });
+                model.AvailableCountries.Add(new SelectListItem { Text = c.Name, Value = c.Id.ToString(), Selected = discountRequirement != null && c.Id == shippingCountryId });
 
             //add a prefix
-            ViewData.TemplateInfo.HtmlFieldPrefix = string.Format("DiscountRulesShippingCountry{0}", discountRequirementId.HasValue ? discountRequirementId.Value.ToString() : "0");
+            ViewData.TemplateInfo.HtmlFieldPrefix = $"DiscountRulesShippingCountry{discountRequirementId?.ToString() ?? "0"}";
 
             return View("~/Plugins/DiscountRules.ShippingCountry/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
         [AdminAntiForgery]
-        public ActionResult Configure(int discountId, int? discountRequirementId, int countryId)
+        public IActionResult Configure(int discountId, int? discountRequirementId, int countryId)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return Content("Access denied");
@@ -105,7 +108,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
             if (discountRequirement != null)
             {
                 //update existing rule
-                _settingService.SetSetting(string.Format("DiscountRequirement.ShippingCountry-{0}", discountRequirement.Id), countryId);
+                _settingService.SetSetting($"DiscountRequirement.ShippingCountry-{discountRequirement.Id}", countryId);
             }
             else
             {
@@ -117,10 +120,10 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
 
                 discount.DiscountRequirements.Add(discountRequirement);
                 _discountService.UpdateDiscount(discount);
-                _settingService.SetSetting(string.Format("DiscountRequirement.ShippingCountry-{0}", discountRequirement.Id), countryId);
+                _settingService.SetSetting($"DiscountRequirement.ShippingCountry-{discountRequirement.Id}", countryId);
             }
 
-            return Json(new { Result = true, NewRequirementId = discountRequirement.Id }, JsonRequestBehavior.AllowGet);
+            return Json(new { Result = true, NewRequirementId = discountRequirement.Id });
         }
 
         #endregion
