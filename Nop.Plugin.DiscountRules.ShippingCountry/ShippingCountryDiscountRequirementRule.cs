@@ -1,11 +1,11 @@
 using System;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Core.Plugins;
 using Nop.Services.Configuration;
 using Nop.Services.Discounts;
 using Nop.Services.Localization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Nop.Plugin.DiscountRules.ShippingCountry
 {
@@ -14,6 +14,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         #region Fields
 
         private readonly ISettingService _settingService;
+        private readonly ILocalizationService _localizationService;
         private readonly IActionContextAccessor _actionContextAccessor;
         private readonly IUrlHelperFactory _urlHelperFactory;
 
@@ -22,10 +23,12 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         #region Ctor
 
         public ShippingCountryDiscountRequirementRule(ISettingService settingService,
+            ILocalizationService localizationService,
             IActionContextAccessor actionContextAccessor,
             IUrlHelperFactory urlHelperFactory)
         {
             this._settingService = settingService;
+            this._localizationService = localizationService;
             this._actionContextAccessor = actionContextAccessor;
             this._urlHelperFactory = urlHelperFactory;
         }
@@ -79,18 +82,18 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         public override void Install()
         {
             //locales
-            this.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry", "Select country");
-            this.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country", "Shipping country");
-            this.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint", "Select required shipping country.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry", "Select country");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country", "Shipping country");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint", "Select required shipping country.");
             base.Install();
         }
 
         public override void Uninstall()
         {
             //locales
-            this.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry");
-            this.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country");
-            this.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry");
+            _localizationService.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country");
+            _localizationService.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint");
             base.Uninstall();
         }
 
