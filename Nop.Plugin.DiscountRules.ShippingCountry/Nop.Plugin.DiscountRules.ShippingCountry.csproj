@@ -16,6 +16,10 @@
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="RouteProvider.cs" />
+  </ItemGroup>
   
   <ItemGroup>
     <None Remove="logo.jpg" />

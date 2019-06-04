@@ -32,9 +32,9 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
         #region Ctor
 
         public DiscountRulesShippingCountryController(ILocalizationService localizationService,
-            IDiscountService discountService, 
+            IDiscountService discountService,
             ICountryService countryService,
-            ISettingService settingService, 
+            ISettingService settingService,
             IPermissionService permissionService)
         {
             this._localizationService = localizationService;
