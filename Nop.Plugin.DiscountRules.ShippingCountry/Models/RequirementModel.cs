@@ -11,13 +11,13 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Models
             AvailableCountries = new List<SelectListItem>();
         }
 
+        public IList<SelectListItem> AvailableCountries { get; set; }
+
         [NopResourceDisplayName("Plugins.DiscountRules.ShippingCountry.Fields.Country")]
         public int CountryId { get; set; }
 
         public int DiscountId { get; set; }
 
         public int RequirementId { get; set; }
-
-        public IList<SelectListItem> AvailableCountries { get; set; }
     }
 }

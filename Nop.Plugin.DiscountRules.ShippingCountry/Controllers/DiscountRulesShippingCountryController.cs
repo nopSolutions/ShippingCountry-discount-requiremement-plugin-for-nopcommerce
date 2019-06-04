@@ -21,27 +21,27 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
     {
         #region Fields
 
-        private readonly ILocalizationService _localizationService;
-        private readonly IDiscountService _discountService;
         private readonly ICountryService _countryService;
-        private readonly ISettingService _settingService;
+        private readonly IDiscountService _discountService;
+        private readonly ILocalizationService _localizationService;
         private readonly IPermissionService _permissionService;
+        private readonly ISettingService _settingService;        
 
         #endregion
 
         #region Ctor
 
-        public DiscountRulesShippingCountryController(ILocalizationService localizationService,
+        public DiscountRulesShippingCountryController(ICountryService countryService,
             IDiscountService discountService,
-            ICountryService countryService,
-            ISettingService settingService,
-            IPermissionService permissionService)
-        {
-            this._localizationService = localizationService;
-            this._discountService = discountService;
-            this._countryService = countryService;
-            this._settingService = settingService;
-            this._permissionService = permissionService;
+            ILocalizationService localizationService,
+            IPermissionService permissionService,
+            ISettingService settingService)
+        {           
+            _countryService = countryService; 
+            _discountService = discountService;
+            _localizationService = localizationService;            
+            _permissionService = permissionService;
+            _settingService = settingService;
         }
 
         #endregion
