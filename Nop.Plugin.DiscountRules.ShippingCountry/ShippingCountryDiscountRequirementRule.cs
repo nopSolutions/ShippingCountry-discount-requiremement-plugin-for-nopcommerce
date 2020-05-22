@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Core;
+using Nop.Services.Common;
 using Nop.Services.Configuration;
+using Nop.Services.Directory;
 using Nop.Services.Discounts;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
@@ -15,6 +19,9 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         #region Fields
 
         private readonly IActionContextAccessor _actionContextAccessor;
+        private readonly IAddressService _addressService;
+        private readonly ICountryService _countryService;
+        private readonly IDiscountService _discountService;
         private readonly ILocalizationService _localizationService;
         private readonly ISettingService _settingService;
         private readonly IUrlHelperFactory _urlHelperFactory;
@@ -25,12 +32,18 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         #region Ctor
 
         public ShippingCountryDiscountRequirementRule(IActionContextAccessor actionContextAccessor,
+            IAddressService addressService,
+            ICountryService countryService,
+            IDiscountService discountService,
             ILocalizationService localizationService,
             ISettingService settingService,
             IUrlHelperFactory urlHelperFactory,
             IWebHelper webHelper)
         {
             _actionContextAccessor = actionContextAccessor;
+            _addressService = addressService;
+            _countryService = countryService;
+            _discountService = discountService;
             _localizationService = localizationService;
             _settingService = settingService;
             _urlHelperFactory = urlHelperFactory;
@@ -57,15 +70,20 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
             if (request.Customer == null)
                 return result;
 
-            if (request.Customer.ShippingAddress == null)
+            if (!request.Customer.ShippingAddressId.HasValue)
                 return result;
 
-            var shippingCountryId = _settingService.GetSettingByKey<int>($"DiscountRequirement.ShippingCountry-{request.DiscountRequirementId}");
+            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format(DiscountRequirementDefaults.SettingsKey, request.DiscountRequirementId));
 
             if (shippingCountryId == 0)
                 return result;
 
-            result.IsValid = request.Customer.ShippingAddress.CountryId == shippingCountryId;
+            var customerShippingAddress = _addressService.GetAddressById(request.Customer.ShippingAddressId.Value);
+            var customerShippingCountryId = customerShippingAddress?.CountryId != null
+                ? _countryService.GetCountryById(customerShippingAddress.CountryId.Value).Id
+                : 0;
+
+            result.IsValid = customerShippingCountryId == shippingCountryId;
 
             return result;
         }
@@ -87,18 +105,31 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         public override void Install()
         {
             //locales
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry", "Select country");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country", "Shipping country");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint", "Select required shipping country.");
+            _localizationService.AddPluginLocaleResource(new Dictionary<string, string>
+            {
+                ["Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry"] = "Select country",
+                ["Plugins.DiscountRules.ShippingCountry.Fields.Country"] = "Shipping country",
+                ["Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint"] = "Select required shipping country.",
+                ["Plugins.DiscountRules.ShippingCountry.Fields.DiscountId.Required"] = "Discount is required",
+                ["Plugins.DiscountRules.ShippingCountry.Fields.CountryId.Required"] = "Country is required"
+            });
+
             base.Install();
         }
 
         public override void Uninstall()
         {
+            //delete discount requirements is exist
+            var discountRequirements = _discountService.GetAllDiscountRequirements()
+                .Where(discountRequirement => discountRequirement.DiscountRequirementRuleSystemName == DiscountRequirementDefaults.SystemName);
+            foreach (var discountRequirement in discountRequirements)
+            {
+                _discountService.DeleteDiscountRequirement(discountRequirement, false);
+            }
+
             //locales
-            _localizationService.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry");
-            _localizationService.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country");
-            _localizationService.DeletePluginLocaleResource("Plugins.DiscountRules.ShippingCountry.Fields.Country.Hint");
+            _localizationService.DeletePluginLocaleResources("Plugins.DiscountRules.ShippingCountry");
+
             base.Uninstall();
         }
 

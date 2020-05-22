@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -17,6 +18,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
 {
     [AuthorizeAdmin]
     [Area(AreaNames.Admin)]
+    [AutoValidateAntiforgeryToken]
     public class DiscountRulesShippingCountryController : BasePluginController
     {
         #region Fields
@@ -62,12 +64,12 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
 
             if (discountRequirementId.HasValue)
             {
-                discountRequirement = discount.DiscountRequirements.FirstOrDefault(dr => dr.Id == discountRequirementId.Value);
+                discountRequirement = _discountService.GetDiscountRequirementById(discountRequirementId.Value);
                 if (discountRequirement == null)
                     return Content("Failed to load requirement.");
             }
 
-            var shippingCountryId = _settingService.GetSettingByKey<int>($"DiscountRequirement.ShippingCountry-{discountRequirementId ?? 0}");
+            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format(DiscountRequirementDefaults.SettingsKey, discountRequirementId ?? 0));
 
             var model = new RequirementModel
             {
@@ -83,47 +85,54 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
                 model.AvailableCountries.Add(new SelectListItem { Text = c.Name, Value = c.Id.ToString(), Selected = discountRequirement != null && c.Id == shippingCountryId });
 
             //add a prefix
-            ViewData.TemplateInfo.HtmlFieldPrefix = $"DiscountRulesShippingCountry{discountRequirementId?.ToString() ?? "0"}";
+            ViewData.TemplateInfo.HtmlFieldPrefix = string.Format(DiscountRequirementDefaults.HtmlFieldPrefix, discountRequirementId ?? 0);
 
             return View("~/Plugins/DiscountRules.ShippingCountry/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
-        [AdminAntiForgery]
-        public IActionResult Configure(int discountId, int? discountRequirementId, int countryId)
+        public IActionResult Configure(RequirementModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return Content("Access denied");
 
-            var discount = _discountService.GetDiscountById(discountId);
-
-            if (discount == null)
-                throw new ArgumentException("Discount could not be loaded");
-
-            DiscountRequirement discountRequirement = null;
-
-            if (discountRequirementId.HasValue)
-                discountRequirement = discount.DiscountRequirements.FirstOrDefault(dr => dr.Id == discountRequirementId.Value);
-
-            if (discountRequirement != null)
+            if (ModelState.IsValid)
             {
-                //update existing rule
-                _settingService.SetSetting($"DiscountRequirement.ShippingCountry-{discountRequirement.Id}", countryId);
-            }
-            else
-            {
-                //save new rule
-                discountRequirement = new DiscountRequirement()
+                //load the discount
+                var discount = _discountService.GetDiscountById(model.DiscountId);
+                if (discount == null)
+                    return NotFound(new { Errors = new[] { "Discount could not be loaded" } });
+
+                //get the discount requirement
+                var discountRequirement = _discountService.GetDiscountRequirementById(model.RequirementId);
+
+                //the discount requirement does not exist, so create a new one
+                if (discountRequirement == null)
                 {
-                    DiscountRequirementRuleSystemName = "DiscountRequirement.ShippingCountryIs"
-                };
+                    discountRequirement = new DiscountRequirement
+                    {
+                        DiscountId = discount.Id,
+                        DiscountRequirementRuleSystemName = DiscountRequirementDefaults.SystemName
+                    };
 
-                discount.DiscountRequirements.Add(discountRequirement);
-                _discountService.UpdateDiscount(discount);
-                _settingService.SetSetting($"DiscountRequirement.ShippingCountry-{discountRequirement.Id}", countryId);
+                    _discountService.InsertDiscountRequirement(discountRequirement);
+                }
+
+                _settingService.SetSetting(string.Format(DiscountRequirementDefaults.SettingsKey, discountRequirement.Id), model.CountryId);
+
+                return Ok(new { NewRequirementId = discountRequirement.Id });
             }
 
-            return Json(new { Result = true, NewRequirementId = discountRequirement.Id });
+            return BadRequest(new { Errors = GetErrorsFromModelState() });
+        }
+
+        #endregion
+
+        #region Utilities
+
+        private IEnumerable<string> GetErrorsFromModelState()
+        {
+            return ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage));
         }
 
         #endregion
