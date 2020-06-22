@@ -8,16 +8,16 @@
         /// <summary>
         /// The system name of the discount requirement rule
         /// </summary>
-        public const string SystemName = "DiscountRequirement.ShippingCountryIs";
+        public const string SYSTEM_NAME = "DiscountRequirement.ShippingCountryIs";
 
         /// <summary>
         /// The key of the settings to save restricted customer roles
         /// </summary>
-        public const string SettingsKey = "DiscountRequirement.ShippingCountry-{0}";
+        public const string SETTINGS_KEY = "DiscountRequirement.ShippingCountry-{0}";
 
         /// <summary>
         /// The HTML field prefix for discount requirements
         /// </summary>
-        public const string HtmlFieldPrefix = "DiscountRulesShippingCountry{0}";
+        public const string HTML_FIELD_PREFIX = "DiscountRulesShippingCountry{0}";
     }
 }

@@ -69,7 +69,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
                     return Content("Failed to load requirement.");
             }
 
-            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format(DiscountRequirementDefaults.SettingsKey, discountRequirementId ?? 0));
+            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format(DiscountRequirementDefaults.SETTINGS_KEY, discountRequirementId ?? 0));
 
             var model = new RequirementModel
             {
@@ -85,7 +85,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
                 model.AvailableCountries.Add(new SelectListItem { Text = c.Name, Value = c.Id.ToString(), Selected = discountRequirement != null && c.Id == shippingCountryId });
 
             //add a prefix
-            ViewData.TemplateInfo.HtmlFieldPrefix = string.Format(DiscountRequirementDefaults.HtmlFieldPrefix, discountRequirementId ?? 0);
+            ViewData.TemplateInfo.HtmlFieldPrefix = string.Format(DiscountRequirementDefaults.HTML_FIELD_PREFIX, discountRequirementId ?? 0);
 
             return View("~/Plugins/DiscountRules.ShippingCountry/Views/Configure.cshtml", model);
         }
@@ -112,13 +112,13 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Controllers
                     discountRequirement = new DiscountRequirement
                     {
                         DiscountId = discount.Id,
-                        DiscountRequirementRuleSystemName = DiscountRequirementDefaults.SystemName
+                        DiscountRequirementRuleSystemName = DiscountRequirementDefaults.SYSTEM_NAME
                     };
 
                     _discountService.InsertDiscountRequirement(discountRequirement);
                 }
 
-                _settingService.SetSetting(string.Format(DiscountRequirementDefaults.SettingsKey, discountRequirement.Id), model.CountryId);
+                _settingService.SetSetting(string.Format(DiscountRequirementDefaults.SETTINGS_KEY, discountRequirement.Id), model.CountryId);
 
                 return Ok(new { NewRequirementId = discountRequirement.Id });
             }

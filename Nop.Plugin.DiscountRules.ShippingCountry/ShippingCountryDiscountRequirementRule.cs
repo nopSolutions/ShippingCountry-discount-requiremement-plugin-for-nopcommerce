@@ -73,17 +73,19 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
             if (!request.Customer.ShippingAddressId.HasValue)
                 return result;
 
-            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format(DiscountRequirementDefaults.SettingsKey, request.DiscountRequirementId));
-
+            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format(DiscountRequirementDefaults.SETTINGS_KEY, request.DiscountRequirementId));
             if (shippingCountryId == 0)
                 return result;
 
             var customerShippingAddress = _addressService.GetAddressById(request.Customer.ShippingAddressId.Value);
-            var customerShippingCountryId = customerShippingAddress?.CountryId != null
-                ? _countryService.GetCountryById(customerShippingAddress.CountryId.Value).Id
-                : 0;
+            if (customerShippingAddress?.CountryId == null || customerShippingAddress.CountryId == 0)
+                return result;
 
-            result.IsValid = customerShippingCountryId == shippingCountryId;
+            var customerShippingCountry = _countryService.GetCountryById(customerShippingAddress.CountryId.Value);
+            if (customerShippingCountry == null)
+                return result;
+
+            result.IsValid = customerShippingCountry.Id == shippingCountryId;
 
             return result;
         }
@@ -121,7 +123,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         {
             //delete discount requirements is exist
             var discountRequirements = _discountService.GetAllDiscountRequirements()
-                .Where(discountRequirement => discountRequirement.DiscountRequirementRuleSystemName == DiscountRequirementDefaults.SystemName);
+                .Where(discountRequirement => discountRequirement.DiscountRequirementRuleSystemName == DiscountRequirementDefaults.SYSTEM_NAME);
             foreach (var discountRequirement in discountRequirements)
             {
                 _discountService.DeleteDiscountRequirement(discountRequirement, false);
