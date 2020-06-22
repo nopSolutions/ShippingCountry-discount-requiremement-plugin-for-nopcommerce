@@ -78,14 +78,11 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
                 return result;
 
             var customerShippingAddress = _addressService.GetAddressById(request.Customer.ShippingAddressId.Value);
-            if (customerShippingAddress?.CountryId == null || customerShippingAddress.CountryId == 0)
-                return result;
+            var customerShippingCountryId = customerShippingAddress?.CountryId != null
+                ? _countryService.GetCountryById(customerShippingAddress.CountryId.Value)?.Id
+                : 0;
 
-            var customerShippingCountry = _countryService.GetCountryById(customerShippingAddress.CountryId.Value);
-            if (customerShippingCountry == null)
-                return result;
-
-            result.IsValid = customerShippingCountry.Id == shippingCountryId;
+            result.IsValid = customerShippingCountryId == shippingCountryId;
 
             return result;
         }
