@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -59,7 +60,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         /// </summary>
         /// <param name="request">Object that contains all information required to check the requirement (Current customer, discount, etc)</param>
         /// <returns>Result</returns>
-        public DiscountRequirementValidationResult CheckRequirement(DiscountRequirementValidationRequest request)
+        public async Task<DiscountRequirementValidationResult> CheckRequirementAsync(DiscountRequirementValidationRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -73,13 +74,13 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
             if (!request.Customer.ShippingAddressId.HasValue)
                 return result;
 
-            var shippingCountryId = _settingService.GetSettingByKey<int>(string.Format(DiscountRequirementDefaults.SETTINGS_KEY, request.DiscountRequirementId));
+            var shippingCountryId = await _settingService.GetSettingByKeyAsync<int>(string.Format(DiscountRequirementDefaults.SETTINGS_KEY, request.DiscountRequirementId));
             if (shippingCountryId == 0)
                 return result;
 
-            var customerShippingAddress = _addressService.GetAddressById(request.Customer.ShippingAddressId.Value);
+            var customerShippingAddress = await _addressService.GetAddressByIdAsync(request.Customer.ShippingAddressId.Value);
             var customerShippingCountryId = customerShippingAddress?.CountryId != null
-                ? _countryService.GetCountryById(customerShippingAddress.CountryId.Value)?.Id
+                ? (await _countryService.GetCountryByIdAsync(customerShippingAddress.CountryId.Value))?.Id
                 : 0;
 
             result.IsValid = customerShippingCountryId == shippingCountryId;
@@ -98,13 +99,17 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
             return urlHelper.Action("Configure", "DiscountRulesShippingCountry",
-                new { discountId = discountId, discountRequirementId = discountRequirementId }, _webHelper.CurrentRequestProtocol);
+                new { discountId = discountId, discountRequirementId = discountRequirementId }, _webHelper.GetCurrentRequestProtocol());
         }
 
-        public override void Install()
+        /// <summary>
+        /// Install the plugin
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public override async Task InstallAsync()
         {
             //locales
-            _localizationService.AddPluginLocaleResource(new Dictionary<string, string>
+            await _localizationService.AddLocaleResourceAsync(new Dictionary<string, string>
             {
                 ["Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry"] = "Select country",
                 ["Plugins.DiscountRules.ShippingCountry.Fields.Country"] = "Shipping country",
@@ -113,23 +118,27 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
                 ["Plugins.DiscountRules.ShippingCountry.Fields.CountryId.Required"] = "Country is required"
             });
 
-            base.Install();
+            await base.InstallAsync();
         }
 
-        public override void Uninstall()
+        /// <summary>
+        /// Uninstall the plugin
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public override async Task UninstallAsync()
         {
-            //delete discount requirements is exist
-            var discountRequirements = _discountService.GetAllDiscountRequirements()
+            //discount requirements
+            var discountRequirements = (await _discountService.GetAllDiscountRequirementsAsync())
                 .Where(discountRequirement => discountRequirement.DiscountRequirementRuleSystemName == DiscountRequirementDefaults.SYSTEM_NAME);
             foreach (var discountRequirement in discountRequirements)
             {
-                _discountService.DeleteDiscountRequirement(discountRequirement, false);
+                await _discountService.DeleteDiscountRequirementAsync(discountRequirement, false);
             }
 
             //locales
-            _localizationService.DeletePluginLocaleResources("Plugins.DiscountRules.ShippingCountry");
+            await _localizationService.DeleteLocaleResourcesAsync("Plugins.DiscountRules.ShippingCountry");
 
-            base.Uninstall();
+            await base.UninstallAsync();
         }
 
         #endregion

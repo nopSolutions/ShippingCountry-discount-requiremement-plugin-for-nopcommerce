@@ -14,10 +14,10 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry.Validators
         {
             RuleFor(model => model.DiscountId)
                 .NotEmpty()
-                .WithMessage(localizationService.GetResource("Plugins.DiscountRules.ShippingCountry.Fields.DiscountId.Required"));
+                .WithMessageAwait(localizationService.GetResourceAsync("Plugins.DiscountRules.ShippingCountry.Fields.DiscountId.Required"));
             RuleFor(model => model.CountryId)
                 .NotEmpty()
-                .WithMessage(localizationService.GetResource("Plugins.DiscountRules.ShippingCountry.Fields.CountryId.Required"));
+                .WithMessageAwait(localizationService.GetResourceAsync("Plugins.DiscountRules.ShippingCountry.Fields.CountryId.Required"));
         }
     }
 }
