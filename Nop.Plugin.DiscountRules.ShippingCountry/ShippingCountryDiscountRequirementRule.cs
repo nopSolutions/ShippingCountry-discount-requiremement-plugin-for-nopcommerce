@@ -109,7 +109,7 @@ namespace Nop.Plugin.DiscountRules.ShippingCountry
         public override async Task InstallAsync()
         {
             //locales
-            await _localizationService.AddLocaleResourceAsync(new Dictionary<string, string>
+            await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
             {
                 ["Plugins.DiscountRules.ShippingCountry.Fields.SelectCountry"] = "Select country",
                 ["Plugins.DiscountRules.ShippingCountry.Fields.Country"] = "Shipping country",
