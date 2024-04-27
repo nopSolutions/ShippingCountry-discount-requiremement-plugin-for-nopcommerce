@@ -4,8 +4,8 @@
 @model Nop.Plugin.DiscountRules.ShippingCountry.Models.RequirementModel
 
 <script type="text/javascript">
-        $(document).ready(function () {
-            $('#saveshippingcountryrequirement@(Model.RequirementId)').click(function () {
+        $(function () {
+            $('#saveshippingcountryrequirement@(Model.RequirementId)').on("click", function() {
                 var countryId = $("#@Html.IdFor(model => model.CountryId)").val();
                 var discountId = @Model.DiscountId;
                 var requirementId = @Model.RequirementId;
@@ -46,7 +46,7 @@
                             $alertInfoEl.html('@T("Admin.Promotions.Discounts.Requirements.FailedToSave")');
                         }
 
-                        $("#saveshippingcountryrequirementAlert").click();
+                        $("#saveshippingcountryrequirementAlert").trigger("click");
                     }
                 });
             });
@@ -57,11 +57,11 @@
     <div class="col-md-3 requirement-label-col">
         <nop-label asp-for="CountryId" />
     </div>
-    <div class="col-md-9 requirement-data-col">
-        <div class="requirement-data-input">
+    <div class="col-md-9 form-group row">
+        <div class="col-md-9">
             <nop-select asp-for="CountryId" asp-items="Model.AvailableCountries" />
         </div>
-        <div class="requirement-data-buttons">
+        <div class="col-md-3">
             <input type="button" id="saveshippingcountryrequirement@(Model.RequirementId)" class="btn btn-primary" value="@T("Admin.Common.Save")" />
         </div>
     </div>
