@@ -94,7 +94,7 @@ public partial class ShippingCountryDiscountRequirementRule : BasePlugin, IDisco
         var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
         return urlHelper.Action("Configure", "DiscountRulesShippingCountry",
-            new { discountId = discountId, discountRequirementId = discountRequirementId }, _webHelper.GetCurrentRequestProtocol());
+            new { discountId, discountRequirementId }, _webHelper.GetCurrentRequestProtocol());
     }
 
     /// <summary>
@@ -125,10 +125,9 @@ public partial class ShippingCountryDiscountRequirementRule : BasePlugin, IDisco
         //discount requirements
         var discountRequirements = (await _discountService.GetAllDiscountRequirementsAsync())
             .Where(discountRequirement => discountRequirement.DiscountRequirementRuleSystemName == DiscountRequirementDefaults.SYSTEM_NAME);
+
         foreach (var discountRequirement in discountRequirements)
-        {
             await _discountService.DeleteDiscountRequirementAsync(discountRequirement, false);
-        }
 
         //locales
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.DiscountRules.ShippingCountry");
