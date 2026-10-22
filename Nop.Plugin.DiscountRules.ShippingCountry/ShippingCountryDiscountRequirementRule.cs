@@ -1,49 +1,44 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Nop.Core;
-using Nop.Services.Common;
+﻿using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.DiscountRules.ShippingCountry;
 
-public partial class ShippingCountryDiscountRequirementRule : BasePlugin, IDiscountRequirementRule
+public class ShippingCountryDiscountRequirementRule : BasePlugin, IDiscountRequirementRule
 {
     #region Fields
 
-    private readonly IActionContextAccessor _actionContextAccessor;
     private readonly IAddressService _addressService;
     private readonly ICountryService _countryService;
     private readonly IDiscountService _discountService;
     private readonly ILocalizationService _localizationService;
+    private readonly INopUrlHelper _nopUrlHelper;
     private readonly ISettingService _settingService;
-    private readonly IUrlHelperFactory _urlHelperFactory;
     private readonly IWebHelper _webHelper;
 
     #endregion
 
     #region Ctor
 
-    public ShippingCountryDiscountRequirementRule(IActionContextAccessor actionContextAccessor,
-        IAddressService addressService,
+    public ShippingCountryDiscountRequirementRule(IAddressService addressService,
         ICountryService countryService,
         IDiscountService discountService,
         ILocalizationService localizationService,
+        INopUrlHelper nopUrlHelper,
         ISettingService settingService,
-        IUrlHelperFactory urlHelperFactory,
         IWebHelper webHelper)
     {
-        _actionContextAccessor = actionContextAccessor;
         _addressService = addressService;
         _countryService = countryService;
         _discountService = discountService;
         _localizationService = localizationService;
+        _nopUrlHelper = nopUrlHelper;
         _settingService = settingService;
-        _urlHelperFactory = urlHelperFactory;
         _webHelper = webHelper;
     }
 
@@ -91,9 +86,7 @@ public partial class ShippingCountryDiscountRequirementRule : BasePlugin, IDisco
     /// <returns>URL</returns>
     public string GetConfigurationUrl(int discountId, int? discountRequirementId)
     {
-        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-
-        return urlHelper.Action("Configure", "DiscountRulesShippingCountry",
+        return _nopUrlHelper.RouteUrl(DiscountRequirementDefaults.ConfigurationRouteName,
             new { discountId, discountRequirementId }, _webHelper.GetCurrentRequestProtocol());
     }
 
